@@ -964,7 +964,7 @@ up to $4.29X$ and $4.88X$ on the given machines.
          \label{fig:tlr-exact}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[h]
 \centering
       \begin{subfigure}[b]{0.33\textwidth}
      \includegraphics[width=1\textwidth]{./figures/iceLake-56-core-pred-performance.pdf}
@@ -1019,11 +1019,8 @@ prediction implementation based on the Tukey $g$-and-$h$ (TGH)
 random fields in the context of climate/weather applications. 
 We propose a task-based exact computation for both operations
 with the aid of existing dense linear algebra libraries to tackle the underlying matrix operation with large problem sizes. We also
-assess low-rank approximations using tile low-rank (TLR) and hierarchically
-off-diagonal low-rank (HODLR). We rely on HiCMA and HODLRLIB to perform the required
-matrix operations for MLE. The TLR approximation carried out
- for  modeling and the prediction
-operations outperforms its HODLR counterpart. Using up to $800K$ geospatial locations, it also shows a speedup up to 
+assess low-rank approximation using tile low-rank (TLR). We rely on HiCMA to perform the required
+matrix operations for MLE. Using up to $800K$ geospatial locations, it also shows a speedup up to 
 $7.29X$ and $2.96X$ compared to the exact implementation on shared and distributed-memory systems,
 respectively. For future work, we would like to consider mixed precision arithmetics with GPU
 hardware accelerators to boost the performance of dense linear algebra kernels. We would like 
