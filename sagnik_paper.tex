@@ -48,14 +48,12 @@ our implementation leverages high concurrency of current parallel systems.
 This permits to run the exact log-likelihood evaluation of the Tukey $g$-and-$h$ (TGH) random fields 
 for a decent number of geospatial locations.
 To tackle large-scale problems, we provide additionally an implementation of the given model 
-using two different low-rank approximations. We compress the aforementioned positive-definite symmetric matrix for computing the 
-log-likelihood and rely on the Tile Low-Rank (TLR) and the Hierarchical off-Diagonal Low-Rank (HODLR) matrix
-approximations. We assess the performance and accuracy of the proposed implementations using synthetic 
+using a low-rank approximation. We compress the aforementioned positive-definite symmetric matrix for computing the 
+log-likelihood and rely on the Tile Low-Rank (TLR) matrix
+approximation. We assess the performance and accuracy of the proposed implementations using synthetic 
 datasets up to $800K$ and a $300K$ precipitation data of Germany to demonstrate the advantage 
-of using non-Gaussian over Gaussian random fields. Moreover, by relying on TLR/HODLR matrix computations, we 
-can now solve for larger matrix sizes, while preserving the required accuracy for prediction. We show
-the performance superiority of TLR over HODLR matrix computations when calculating the TGH 
-likelihoods and predictions. Our TLR-based approximation shows a 
+of using non-Gaussian over Gaussian random fields. Moreover, by relying on TLR matrix computation, we 
+can now solve for larger matrix sizes, while preserving the required accuracy for prediction. Our TLR-based approximation shows a 
 speedup up to $7.29X$ and $2.96X$ on shared-memory and distributed-memory systems, respectively, compared
 to the exact implementation. % while preserving the required accuracy.
 \end{abstract}
@@ -88,21 +86,18 @@ We rely on a task-based programming model to provide
 the TGH modeling and prediction operations in the exact form where the dense linear algebra operations have been drawn from 
 the Chameleon library~\cite{agullo2017achieving}
 and the underlying tasks schedule managed by the StarPU 
-runtime system~\cite{augonnet2011starpu}. We also provide two low-rank implementations 
-of the TGH model: TLR-based, where the compression and linear algebra operations run through the HiCMA library~\cite{hicma-soft}, and 
-Hierarchical off-Diagonal Low-Rank (HODLR)-based approximations~\cite{hodlr-soft}, where the 
-compression and linear algebra operations run through HODLRLIB~\cite{hodlr-soft, ambikasaran2013mathcal}.
+runtime system~\cite{augonnet2011starpu}. We also provide a low-rank implementation 
+of the TGH model: TLR-based, where the compression and linear algebra operations run through the HiCMA library~\cite{hicma-soft}.
 The TLR-based implementation shows a 
 speedup up to $7.29X$ and $2.96X$ on shared-memory and distributed-memory systems, respectively, compared
 to exact implementation.
 
 Our main contributions are as follows: 1) We propose a 
 parallel implementation of the TGH non-Gaussian likelihoods and predictions to model a wide range of real spatial 
-datasets on shared-memory and distributed-memory systems; 2) We provide parallel TLR-based and HODLR-based approximations to the exact predictive model to reduce the 
+datasets on shared-memory and distributed-memory systems; 2) We provide parallel TLR-based approximation to the exact predictive model to reduce the 
 prohibitive complexity of the underlying algebra operations of the associated dense covariance matrix; 3) We show the effectiveness 
-of the non-Gaussian scheme provided by our implementation compared with the traditional Gaussian modeling with both synthetic and real datasets; 4) We provide a comparison in the parameters' estimation accuracy to 
-produce  the required accuracy  for both  TLR-based  and HODLR-based approximation; 5) We assess the performance of exact/TLR/HODLR non-Gaussian 
-modeling and prediction on shared-memory and distributed-memory systems; and 6) We demonstrate the quality of our 
+of the non-Gaussian scheme provided by our implementation compared with the traditional Gaussian modeling with both synthetic and real datasets; 4) We assess the performance of exact/TLR non-Gaussian 
+modeling and prediction on shared-memory and distributed-memory systems; and 5) We demonstrate the quality of our 
 implementation in a $300K$ precipitation dataset of Germany to show that we are 
 able to provide a robust predictive model to work in such a non-Gaussian dataset.
 
@@ -270,48 +265,48 @@ with a data sparsity structure.
 % structure enables further compression by assuming that the low-rank basis of a parent block can be obtained from the low-rank
 % basis of its child while the admissibility defines the degree of
 % low-rank compression that can be applied to a specific block.
-In this paper, we focus on HODLR and TLR for computing MLE. A detailed overview of these
-methods is given in the following subsections.
+In this paper, we focus on TLR for computing MLE. A detailed overview of these
+methods is given in the following subsection.
 
 
-\subsubsection{Hierarchically Off-Diagonal Low-Rank Approximations}
+%\subsubsection{Hierarchically Off-Diagonal Low-Rank Approximations}
+%
+%Hierarchically Off-Diagonal Low-Rank (HODLR) matrices provides a hierarchical representation of 
+%low-rank off-diagonal blocks with recursive 
+%definition 2x2 blocks of the given matrix $C$,
+%
+%\begin{equation}\label{eq:hodlr_format}
+%A=
+%\begin{bmatrix}
+%C_{11} & C_{12} \\
+%C_{21} & C_{22}
+%\end{bmatrix},
+%\end{equation}
+%where $C_{12}$ and $C_{21}$ are in low-rank representation, and $C_{11}$ and $C_{22}$ recursively represent the HODLR matrix. Once
+%the diagonal blocks reach a given leaf size, the recursion stops 
+%after $t$ steps, where $t$ is the level of HODLR matrix. HODLR matrices require representing all off-diagonal blocks in low-rank. Fig.~\ref{fig:hodlr-structure} illustrates how to construct a HODLR matrix
+%of level 3. Dense blocks are represented in red and the low-rank 
+%blocks are represented in green. The final structure of the matrix is 
+%shown on the right side of the figure.
+%
+%In this work, we employ HODLRLIB,  a parallel HODLR-based 
+%library, to perform matrix operations in MLE. %in near-linear complexity. 
+%% The library uses a non-nested low-rank structure based on the
+%% KDTree algorithm, where the low-rank approximation
+%% for off-diagonal blocks is obtained using the root pivoting algorithm.
+%HODLRLIB relies on OpenMP multithreaded BLAS for parallel performance.
+%%, based
+%%on the expensive fork-join paradigm.
+%
+%
+%\begin{figure}[h]
+%\centering
+%\includegraphics[width=0.38\textwidth]{./figures/hodlr_structure2.pdf}
+%\caption{Recursive construction of HODLR matrix of level 3. The red blocks are represented in dense format at all levels, while the green blocks are represented in low-rank format.}
+%\label{fig:hodlr-structure}
+%\end{figure}
 
-Hierarchically Off-Diagonal Low-Rank (HODLR) matrices provides a hierarchical representation of 
-low-rank off-diagonal blocks with recursive 
-definition 2x2 blocks of the given matrix $C$,
-
-\begin{equation}\label{eq:hodlr_format}
-A=
-\begin{bmatrix}
-C_{11} & C_{12} \\
-C_{21} & C_{22}
-\end{bmatrix},
-\end{equation}
-where $C_{12}$ and $C_{21}$ are in low-rank representation, and $C_{11}$ and $C_{22}$ recursively represent the HODLR matrix. Once
-the diagonal blocks reach a given leaf size, the recursion stops 
-after $t$ steps, where $t$ is the level of HODLR matrix. HODLR matrices require representing all off-diagonal blocks in low-rank. Fig.~\ref{fig:hodlr-structure} illustrates how to construct a HODLR matrix
-of level 3. Dense blocks are represented in red and the low-rank 
-blocks are represented in green. The final structure of the matrix is 
-shown on the right side of the figure.
-
-In this work, we employ HODLRLIB,  a parallel HODLR-based 
-library, to perform matrix operations in MLE. %in near-linear complexity. 
-% The library uses a non-nested low-rank structure based on the
-% KDTree algorithm, where the low-rank approximation
-% for off-diagonal blocks is obtained using the root pivoting algorithm.
-HODLRLIB relies on OpenMP multithreaded BLAS for parallel performance.
-%, based
-%on the expensive fork-join paradigm.
-
-
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.38\textwidth]{./figures/hodlr_structure2.pdf}
-\caption{Recursive construction of HODLR matrix of level 3. The red blocks are represented in dense format at all levels, while the green blocks are represented in low-rank format.}
-\label{fig:hodlr-structure}
-\end{figure}
-
-\subsubsection{Tile Low-Rank Approximations}
+\subsubsection*{Tile Low-Rank Approximations}
 Tile Low-Rank (TLR) approximation~\cite{akbudak2017tile,amestoy2015improving} is a flat approach that consists in splitting the dense matrix
 into tiles of similar sizes. Fig.~\ref{fig:tlr-structure} shows an example of compressing 
 an off-diagonal tile $T_{12}$ to two matrices $U_{12}$ and $V_{12}$,  
@@ -353,10 +348,9 @@ low-rank approximation.}
 
 This section explains our proposed parallel
 implementation of the TGH non-Gaussian likelihoods
-and predictions in exact, tile low-rank (TLR) approximation
-and hierarchical off-diagonal low-rank (HODLR) approximation
+and predictions in exact and tile low-rank (TLR) approximation
 format. We show the
-distribution of the ranks in both TLR and HOLDR matrices
+distribution of the ranks in TLR matrices
 associated with TGH random fields compared to the dense matrix.
 
 
@@ -431,7 +425,7 @@ covariance matrix. Furthermore,  we exploit the data sparsity
 structure of the covariance matrix and apply low-rank
 approximation methods to reduce the overall 
 complexity of the underlying linear algebra operations. 
-In particular, we use TLR and HODLR matrix approximations to speed up the computation of the Cholesky factorization 
+In particular, we use TLR matrix approximationsto speed up the computation of the Cholesky factorization 
 heavyweight operation while preserving the accuracy 
 requirement of the application. 
 
@@ -476,7 +470,7 @@ requirement of the application.
         \label{fig:tlr-deacy}
 \end{figure}
 
-\subsubsection{TLR Approximation of $\bm{R}_{\bm{\theta}_2}$}
+\subsubsection*{TLR Approximation of $\bm{R}_{\bm{\theta}_2}$}
 The TLR approximation in HiCMA library compresses
 the individual tile using
 the SVD algorithm, where the ranks of the tiles represent
@@ -528,61 +522,61 @@ any dramatic changes in ranks or ranks decaying. All the above observations show
 
 
 
-\subsubsection{HODLR Approximation of $\bm{R}_{\bm{\theta}_2}$}
-% The HODLR implementation in HODLRLIB compresses the
-% matrix blocks using the rook pivoting algorithm and uses the
-% KD-tree for hierarchical matrix partitioning. Each block is compressed individually, and the low-rank structure produces lower ranks
-% compared to the dense format. As mentioned in TLR, the ranks
-% values reflect the accuracy level of the compression and should be determined based on the application requirements.
-Herein, we used also three accuracy levels, namely, HODLR-5 ($10^{-5}$), HODLR-7 ($10^{-7}$), and HODLR-9 ($10^{-9}$). 
-Fig.~\ref{fig:heatmap_hodlr} depicts the rank distribution
-of a $8100 \times 8100$ covariance matrix. Herein, we also use the medium correlation case to show the rank distribution. As shown by the figure, the matrix is divided into blocks in a hierarchical structure where the $leaf$  represents the size of matrices at leaf level. It is clearly shown that the smaller blocks have lower ranks, and at the higher structure levels of the matrix, the ranks increase. In red, the diagonal leaf blocks are kept dense. Furthermore, we do not observe any noticeable growth in ranks with larger $N$ when using the HODLR structure. Fig.~\ref{fig:hodlr-decay} shows the decay of the ranks in the case of HODLR matrices. The ranks drop faster than the TLR approximation because HODLR has smaller blocks at lower levels. We choose the size of leaf blocks:$100$ and $400$ 
-with two matrix sizes. With larger leaf block size, the ranks
-increases. As the LR approximation, increasing the matrix
-size does not affect the ranks but compresses more blocks. 
-The figure also shows the impact of the smoothness 
-parameter $\nu$, which produces higher ranks in the rough field.
-
- 
-\begin{figure}[t]
-\centering
-\begin{subfigure}{.16\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{{./figures/image-8100-0.960000-0.500000-0.000000-2.000000-0.500000-0.300000-100--5.000000}.pdf}
-   \caption{ $10^{-5}$.}
-\end{subfigure}%
-\begin{subfigure}{.16\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{{./figures/image-8100-0.960000-0.500000-0.000000-2.000000-0.500000-0.300000-100--7.000000}.pdf}
-   \caption{ $10^{-7}$.}
-\end{subfigure}%
-\centering
-\begin{subfigure}{.16\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{{./figures/image-8100-0.960000-0.500000-0.000000-2.000000-0.500000-0.300000-100--9.000000}.pdf}
-   \caption{ $10^{-9}$.}
-\end{subfigure}
-\caption{Rank distributions of a $8100 \times 8100$ non-Gaussian covariance HODLR matrix using leaf = 100 with TGH Mat\'ern parameters $\bm{\theta} = (0.96, 0.5, 0, 2, 0.5, 0.3)^\top$ under different accuracy levels.}
-\label{fig:heatmap_hodlr}
-\end{figure}
-
-\begin{figure}
-     \centering
-     \begin{subfigure}[b]{0.23\textwidth}
-         \centering
-         \includegraphics[width=\textwidth]{./figures/ranks-decay-8100-hodlr.pdf}
-         \caption{$N = 8100$ / $leaf = 100$.}
-         \label{fig:hodlr-decay-8100}
-     \end{subfigure}
-     \begin{subfigure}[b]{0.23\textwidth}
-         \centering
-         \includegraphics[width=\textwidth]{./figures/ranks-decay-32400-hodlr.pdf}
-         \caption{$N = 32400$ / $leaf = 400$.}
-         \label{fig:hodlr-decay-32400}
-     \end{subfigure}
-        \caption{Decay of the ranks of different blocks with HODLR approximation when using non-Gaussian Mat\'ern kernel with smoothness $\nu =0.5$ (Exponential kernel), and $\nu=1$ (Whittle kernel) and two matrix sizes.}
-        \label{fig:hodlr-decay}
-\end{figure}
+%\subsubsection{HODLR Approximation of $\bm{R}_{\bm{\theta}_2}$}
+%% The HODLR implementation in HODLRLIB compresses the
+%% matrix blocks using the rook pivoting algorithm and uses the
+%% KD-tree for hierarchical matrix partitioning. Each block is compressed individually, and the low-rank structure produces lower ranks
+%% compared to the dense format. As mentioned in TLR, the ranks
+%% values reflect the accuracy level of the compression and should be determined based on the application requirements.
+%Herein, we used also three accuracy levels, namely, HODLR-5 ($10^{-5}$), HODLR-7 ($10^{-7}$), and HODLR-9 ($10^{-9}$). 
+%Fig.~\ref{fig:heatmap_hodlr} depicts the rank distribution
+%of a $8100 \times 8100$ covariance matrix. Herein, we also use the medium correlation case to show the rank distribution. As shown by the figure, the matrix is divided into blocks in a hierarchical structure where the $leaf$  represents the size of matrices at leaf level. It is clearly shown that the smaller blocks have lower ranks, and at the higher structure levels of the matrix, the ranks increase. In red, the diagonal leaf blocks are kept dense. Furthermore, we do not observe any noticeable growth in ranks with larger $N$ when using the HODLR structure. Fig.~\ref{fig:hodlr-decay} shows the decay of the ranks in the case of HODLR matrices. The ranks drop faster than the TLR approximation because HODLR has smaller blocks at lower levels. We choose the size of leaf blocks:$100$ and $400$ 
+%with two matrix sizes. With larger leaf block size, the ranks
+%increases. As the LR approximation, increasing the matrix
+%size does not affect the ranks but compresses more blocks. 
+%The figure also shows the impact of the smoothness 
+%parameter $\nu$, which produces higher ranks in the rough field.
+%
+% 
+%\begin{figure}[t]
+%\centering
+%\begin{subfigure}{.16\textwidth}
+%  \centering
+%  \includegraphics[width=\linewidth]{{./figures/image-8100-0.960000-0.500000-0.000000-2.000000-0.500000-0.300000-100--5.000000}.pdf}
+%   \caption{ $10^{-5}$.}
+%\end{subfigure}%
+%\begin{subfigure}{.16\textwidth}
+%  \centering
+%  \includegraphics[width=\linewidth]{{./figures/image-8100-0.960000-0.500000-0.000000-2.000000-0.500000-0.300000-100--7.000000}.pdf}
+%   \caption{ $10^{-7}$.}
+%\end{subfigure}%
+%\centering
+%\begin{subfigure}{.16\textwidth}
+%  \centering
+%  \includegraphics[width=\linewidth]{{./figures/image-8100-0.960000-0.500000-0.000000-2.000000-0.500000-0.300000-100--9.000000}.pdf}
+%   \caption{ $10^{-9}$.}
+%\end{subfigure}
+%\caption{Rank distributions of a $8100 \times 8100$ non-Gaussian covariance HODLR matrix using leaf = 100 with TGH Mat\'ern parameters $\bm{\theta} = (0.96, 0.5, 0, 2, 0.5, 0.3)^\top$ under different accuracy levels.}
+%\label{fig:heatmap_hodlr}
+%\end{figure}
+%
+%\begin{figure}
+%     \centering
+%     \begin{subfigure}[b]{0.23\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{./figures/ranks-decay-8100-hodlr.pdf}
+%         \caption{$N = 8100$ / $leaf = 100$.}
+%         \label{fig:hodlr-decay-8100}
+%     \end{subfigure}
+%     \begin{subfigure}[b]{0.23\textwidth}
+%         \centering
+%         \includegraphics[width=\textwidth]{./figures/ranks-decay-32400-hodlr.pdf}
+%         \caption{$N = 32400$ / $leaf = 400$.}
+%         \label{fig:hodlr-decay-32400}
+%     \end{subfigure}
+%        \caption{Decay of the ranks of different blocks with HODLR approximation when using non-Gaussian Mat\'ern kernel with smoothness $\nu =0.5$ (Exponential kernel), and $\nu=1$ (Whittle kernel) and two matrix sizes.}
+%        \label{fig:hodlr-decay}
+%\end{figure}
 
 
 \subsection{TGH Non-Gaussian Prediction}
@@ -633,7 +627,7 @@ on the location $\bm{s}_k$.
 \end{algorithm}
 
 
-Using low-rank approximation in the form of TLR or HODLR for both $\bm{R}_{\widehat{\bm{\theta}}_2}$ and $\bm{r}_{\widehat{\bm{\theta}}_2}$  in
+Using low-rank approximation in the form of TLR for both $\bm{R}_{\widehat{\bm{\theta}}_2}$ and $\bm{r}_{\widehat{\bm{\theta}}_2}$  in
  Algorithm~\ref{algo:non-gaussian-pred} can help
 in reducing the complexity of the TGH prediction algorithm
 similar to the likelihood estimation operation. In the following
@@ -668,7 +662,7 @@ has 128 GB of DDR4 memory. The system has a total of
 197,568 processor cores and 790 TB of aggregate memory.
 
 Our implementation enables performance portability as long as an optimized BLAS/LAPACK library is available on the target system. On our testbed systems, we rely on Intel MKL v2020.0.166 as the optimized BLAS/LAPACK library to link against the necessary optimized numerical routines for our implementations. We compile our exact and TLR code using Chameleon and HiCMA linear algebra libraries with  GCC V11.1, HWLOC v2.5.0, StarPU v1.3.8,  GSL v2.7,
-and NLopt v2.6.2 optimization libraries. For HODLR-based implementation, we use HODLRLIB, compiled it with GCC V11.1, and linked it with GSL v2.7 and NLopt v2.6.2. All computations are carried out in double-precision arithmetic.%, and each run has been repeated three times.
+and NLopt v2.6.2 optimization libraries. 
 
 The accuracy and qualitative analyses are performed using synthetic and real datasets, i.e., the precipitation dataset of Germany. We use the daily average precipitation of Germany in January of the year 2021. The data is collected by Kaspar et al. \cite{kaspar2013monitoring} and covers the whole of Germany with a spatial resolution of $1$ km $\times$ $1$ km. The daily average precipitation is given in mm. Because of this high spatial resolution, the total number of locations is $n = 358303$. To make the data stationary, we remove the mean of the daily average precipitation of January over the year 2000 to 2020 from the data. So, the data can be interpreted as the excess daily average precipitation for January of 2021. The spatial image of the data is given in Fig.~\ref{fig:data_image}.
 \begin{figure}[h]
@@ -679,7 +673,7 @@ The accuracy and qualitative analyses are performed using synthetic and real dat
   \label{fig:data_image}
 \end{figure}
 
-\subsection{TLR/HODLR Accuracy Estimation Assessment}
+\subsection{TLR Accuracy Estimation Assessment}
 %%%%%%%%%%%%%%%%
 In this section, we demonstrate the accuracy of the MLE obtained using synthetic datasets. We generate $20164$ random observations from a TGH random field defined in \eqref{eq:TGH_random_field} on the  $[0,1]\times[0,1]$ square in the following four setups, with latent correlation function as in \eqref{eq:matern}:
 \begin{enumerate}
@@ -691,10 +685,10 @@ In this section, we demonstrate the accuracy of the MLE obtained using synthetic
 
 
 The effective range is the distance at which the correlation between two points becomes less than $0.05$. Given the other parameters, we find $\phi$ for different setups by changing the effective range. We use the correlation function of the TGH random field, given in \cite{xu2017tukey}, for evaluating $\phi$ in different setups. 
-For each of these four setups, we estimate the parameters by maximizing the likelihood function given in \eqref{eq:Likelihood}. We compute the log-likelihood with TLR and HODLR with different accuracies. We repeat the procedure 100 times for both TLR and HODLR and their different accuracies. Moreover, we do the same with the exact log-likelihood. We present the boxplots of the estimated parameter values for different setups and different computation techniques in Fig.~\ref{fig:boxplot}. We used three accuracy levels for both HODLR (i.e., HODLR-5, HODLR-7, and HODLR-9) and TLR (i.e., TLR-5, TLR-7, and TLR-9) compared to the exact estimation (i.e., Exact).
+For each of these four setups, we estimate the parameters by maximizing the likelihood function given in \eqref{eq:Likelihood}. We compute the log-likelihood with TLR with different accuracies. We repeat the procedure 100 times for TLR and its different accuracies. Moreover, we do the same with the exact log-likelihood. We present the boxplots of the estimated parameter values for different setups and different computation techniques in Fig.~\ref{fig:boxplot}. We used three accuracy levels for TLR (i.e., TLR-5, TLR-7, and TLR-9) compared to the exact estimation (i.e., Exact).
 
 
-The boxplots suggest that the estimation accuracy does not vary much with the different parameter setups. It is also worth noting that the estimation accuracy increases if we increase the accuracy of TLR or HODLR. Our result also shows that TLR works better for TGH non-Gaussian model estimation compared to HODLR over different accuracies. As expected for higher accuracy, the difference between TLR, HODLR, and exact becomes negligible.
+The boxplots suggest that the estimation accuracy does not vary much with the different parameter setups. It is also worth noting that the estimation accuracy increases if we increase the accuracy of TLR. As expected for higher accuracy, the difference between TLR and exact becomes negligible.
 
 
 %%%%%%%%%%%
@@ -767,7 +761,7 @@ The boxplots suggest that the estimation accuracy does not vary much with the di
  %  \vspace{-8mm}
   \caption{  $\xi = 0$, $\omega = 2$, $g = 0.2$, $h = 0.2$, $\nu = 0.5$, and $\phi = 0.98$.}
 \end{subfigure}%
-\caption{Boxplots of parameter estimates under the HODLR (H), TLR (T), and exact (E) log-likelihood computation. The true parameters are indicated by the red lines.}
+\caption{Boxplots of parameter estimates under the TLR and exact log-likelihood computation. The true parameters are indicated by the red lines.}
 \label{fig:boxplot}
 \end{figure*}
 
@@ -859,71 +853,69 @@ Gaussian & $10.36$ & $0.57$ & $0.26$ & $1.04$ & -  & -   \\
 \end{figure}
 
 
-\subsection{TLR/HODLR Matrices Performance Assessment}
-We provide the TGH modeling and prediction operations in
-low-rank structure using both TLR and HODLR approximations.
-The baseline TLR software is the HiCMA library, which runs on
-both shared-memory and distributed memory architectures, while
-the HODLR underlying software is HODLRLIB, which only has a shared-memory implementation through OpenMP
-multithreaded BLAS. We compare the TGH non-Gaussian model using TLR
-against HODLR approximations on two
-different shared-memory architectures from two vendors, i.e., Intel
-and AMD. We assess the performance of both
- implementations of the TGH non-Gaussian likelihood function.
-
-
-\begin{figure}
-\centering
-%     \begin{subfigure}[b]{0.38\textwidth}
-%     \includegraphics[width=1\textwidth]{./figures/lr-performance-shihab.pdf}
-%     \caption{Intel Haswell 36-core}
-%      \label{fig:tlrhodlr-shihab}
+%\subsection{TLR Matrices Performance Assessment}
+%We provide the TGH modeling and prediction operations in
+%low-rank structure using TLR approximation.
+%The baseline TLR software is the HiCMA library, which runs on
+%both shared-memory and distributed memory architectures. We compare the TGH non-Gaussian model using TLR
+%against HODLR approximations on two
+%different shared-memory architectures from two vendors, i.e., Intel
+%and AMD. We assess the performance of both
+% implementations of the TGH non-Gaussian likelihood function.
+%
+%
+%\begin{figure}
+%\centering
+%%     \begin{subfigure}[b]{0.38\textwidth}
+%%     \includegraphics[width=1\textwidth]{./figures/lr-performance-shihab.pdf}
+%%     \caption{Intel Haswell 36-core}
+%%      \label{fig:tlrhodlr-shihab}
+%%    \end{subfigure}
+%      \begin{subfigure}[b]{0.43\textwidth}
+%     \includegraphics[width=1\textwidth]{./figures/lr-performance-qaysar.pdf}
+%     \caption{56-core Intel IceLake.}
+%      \label{fig:tlrhodlr-qaysar}
 %    \end{subfigure}
-      \begin{subfigure}[b]{0.43\textwidth}
-     \includegraphics[width=1\textwidth]{./figures/lr-performance-qaysar.pdf}
-     \caption{56-core Intel IceLake.}
-      \label{fig:tlrhodlr-qaysar}
-    \end{subfigure}
-     \begin{subfigure}[b]{0.43\textwidth}
-     \includegraphics[width=1\textwidth]{./figures/lr-performance-kanary.pdf}
-     \caption{128-core AMD Milan.}
-     \label{fig:tlrhodlr-kanary}
-    \end{subfigure}
-%    \begin{subfigure}[b]{0.38\textwidth}
-%    \includegraphics[width=1\textwidth]{./figures/lr-performance-tuwaiq.pdf}
-%    \caption{AMD Rome 64-core}
-%     \label{fig:tlrhodlr-tuwaiq}
-%     \end{subfigure}
-     \caption{Time breakdown of a single TGH non-Gaussian likelihood function estimation on two shared-memory systems using TLR and HODLR computations.}
-       \label{fig:tlr-vs-hodlr}
-     \end{figure}
-     
-     
-
-Fig.~\ref{fig:tlr-vs-hodlr} shows the breakdown of execution times to
-calculate a single TGH likelihood function using both TLR
-and HODLR matrices. We report the result of three
-accuracy levels for each approximation method using
-five dataset sizes. The execution time is broken down into matrix assembly time
-(i.e., the time taken to compute the covariance matrix in low-rank structure), matrix factorization time (POTRF), and
-others (i.e., matrix determinant computing, measurements vector
-transformation, matrix-vector triangular solve (TRSV)).  
-The figure highlights that the HiCMA-based
-implementation of the TLR approximation is faster than
-the HODLRLIB implementation of the HODLR approximation.
-Moreover, it can be seen that with different accuracy levels, the total
-execution time difference increases between TLR and HODLR. For instance, on Intel IceLake, TLR outperforms HODLR by $2.29X$, $4.66X$, and $6.46X$ with accuracy levels $10^{-5}$, $10^{-7}$, $10^{-9}$, respectively. We also observed that the speedup is strongly influenced by the number of cores; for instance, on AMD Milan, TLR 
-outperforms HODLR by $6.82X$ with an accuracy level of $10^{-9}$ which means that HODLRLIB cannot efficiently utilize the 
-system resources. This performance difference between HiCMA and HODLRLIB comes mostly
-from the programming models: task-based with asynchronous executions (i.e., HiCMA) versus
-bulk-synchronous fork-join paradigm (i.e., HODLRLIB).
-The figure also shows that assembling the covariance 
-matrix with TLR format accounts now for most of the 
-likelihood function estimation. The matrix assembly takes up to 
-$70\%$ and $85\%$ of the total time on Intel IceLake and AMD Milan, respectively. 
-In contrast, due to a slower HODLRLIB MLE, 
-the matrix assembly takes about $65\%$ of the total execution time on 
-both machines. 
+%     \begin{subfigure}[b]{0.43\textwidth}
+%     \includegraphics[width=1\textwidth]{./figures/lr-performance-kanary.pdf}
+%     \caption{128-core AMD Milan.}
+%     \label{fig:tlrhodlr-kanary}
+%    \end{subfigure}
+%%    \begin{subfigure}[b]{0.38\textwidth}
+%%    \includegraphics[width=1\textwidth]{./figures/lr-performance-tuwaiq.pdf}
+%%    \caption{AMD Rome 64-core}
+%%     \label{fig:tlrhodlr-tuwaiq}
+%%     \end{subfigure}
+%     \caption{Time breakdown of a single TGH non-Gaussian likelihood function estimation on two shared-memory systems using TLR and HODLR computations.}
+%       \label{fig:tlr-vs-hodlr}
+%     \end{figure}
+%     
+%     
+%
+%Fig.~\ref{fig:tlr-vs-hodlr} shows the breakdown of execution times to
+%calculate a single TGH likelihood function using both TLR
+%and HODLR matrices. We report the result of three
+%accuracy levels for each approximation method using
+%five dataset sizes. The execution time is broken down into matrix assembly time
+%(i.e., the time taken to compute the covariance matrix in low-rank structure), matrix factorization time (POTRF), and
+%others (i.e., matrix determinant computing, measurements vector
+%transformation, matrix-vector triangular solve (TRSV)).  
+%The figure highlights that the HiCMA-based
+%implementation of the TLR approximation is faster than
+%the HODLRLIB implementation of the HODLR approximation.
+%Moreover, it can be seen that with different accuracy levels, the total
+%execution time difference increases between TLR and HODLR. For instance, on Intel IceLake, TLR outperforms HODLR by $2.29X$, $4.66X$, and $6.46X$ with accuracy levels $10^{-5}$, $10^{-7}$, $10^{-9}$, respectively. We also observed that the speedup is strongly influenced by the number of cores; for instance, on AMD Milan, TLR 
+%outperforms HODLR by $6.82X$ with an accuracy level of $10^{-9}$ which means that HODLRLIB cannot efficiently utilize the 
+%system resources. This performance difference between HiCMA and HODLRLIB comes mostly
+%from the programming models: task-based with asynchronous executions (i.e., HiCMA) versus
+%bulk-synchronous fork-join paradigm (i.e., HODLRLIB).
+%The figure also shows that assembling the covariance 
+%matrix with TLR format accounts now for most of the 
+%likelihood function estimation. The matrix assembly takes up to 
+%$70\%$ and $85\%$ of the total time on Intel IceLake and AMD Milan, respectively. 
+%In contrast, due to a slower HODLRLIB MLE, 
+%the matrix assembly takes about $65\%$ of the total execution time on 
+%both machines. 
 
 
 
