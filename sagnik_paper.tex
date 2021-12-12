@@ -336,13 +336,13 @@ high hardware occupancy.
 % manycore architectures and avoid the scalability problems with existing block-based algorithms.  LAPACK~\cite{anderson1999lapack} is an example
 % of block-based software, and PLASMA~\cite{dongarra2019plasma}  and Chameleon are an example of tile-based software.
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.38\textwidth]{./figures/tlr_graph.pdf}
-\caption{An example of TLR approximation tile: diagonal tiles (in red) are dense. Off-diagonal tiles (in green) are represented as
-low-rank approximation.}
-\label{fig:tlr-structure}
-\end{figure}
+%\begin{figure}[h]
+%\centering
+%\includegraphics[width=0.38\textwidth]{./figures/tlr_graph.pdf}
+%\caption{An example of TLR approximation tile: diagonal tiles (in red) are dense. Off-diagonal tiles (in green) are represented as
+%low-rank approximation.}
+%\label{fig:tlr-structure}
+%\end{figure}
 
 \section{Parallel TGH Non-Gaussian Modeling and Prediction}
 
@@ -725,7 +725,7 @@ The boxplots suggest that the estimation accuracy does not vary much with the di
 %\label{fig:boxplot}
 %\end{figure*}
 
-\begin{figure*}[htp!]
+\begin{figure}[htp!]
 \centering
 %\begin{subfigure}{0.5\textwidth}
 %  \centering
@@ -763,26 +763,26 @@ The boxplots suggest that the estimation accuracy does not vary much with the di
 \end{subfigure}%
 \caption{Boxplots of parameter estimates under the TLR and exact log-likelihood computation. The true parameters are indicated by the red lines.}
 \label{fig:boxplot}
-\end{figure*}
-
-\subsection{Evaluation of Prediction with TGH Random Fields}
-\label{sec:pit}
-We check the validity of our PIT assessment tool of the TGH non-Gaussian model. In this simulation study, we generate observations with parameter of setup (a) from the previous section and fit both Gaussian and TGH non-Gaussian models. We create the PIT histogram using the method discussed in Section~\ref{sec:pit}. Fig.~\ref{fig:PIT_synthetic} suggests that the PIT histogram obtained by fitting the Gaussian model is not at all a representation of a uniform distribution. To create a single measure of model adequacy, we introduce the mean divergence distance (MDD) from the PIT histograms. The MDD is defined as the average squared divergence of the length of the bars of the histogram from the value $1$ (uniform density): the smaller the MDD, the better the fitted model. The MDD of both models is reported in Fig.~\ref{fig:PIT_synthetic}. As expected, the TGH non-Gaussian model performs better than the Gaussian model for this synthetic data.
-\begin{figure}[h]
-\centering
-\begin{subfigure}{.25\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{./figures/PIT_TGH.pdf}
-   \caption{TGH non-Gaussian.}
-\end{subfigure}%
-\begin{subfigure}{.25\textwidth}
-  \centering
-  \includegraphics[width=\linewidth]{./figures/PIT_Gau.pdf}
-  \caption{Gaussian.}
-\end{subfigure}
-  \caption{PIT histograms for predictive distribution with the same TGH synthetic dataset.}
-  \label{fig:PIT_synthetic}
 \end{figure}
+
+%\subsection{Evaluation of Prediction with TGH Random Fields}
+%\label{sec:pit}
+%We check the validity of our PIT assessment tool of the TGH non-Gaussian model. In this simulation study, we generate observations with parameter of setup (a) from the previous section and fit both Gaussian and TGH non-Gaussian models. We create the PIT histogram using the method discussed in Section~\ref{sec:pit}. Fig.~\ref{fig:PIT_synthetic} suggests that the PIT histogram obtained by fitting the Gaussian model is not at all a representation of a uniform distribution. To create a single measure of model adequacy, we introduce the mean divergence distance (MDD) from the PIT histograms. The MDD is defined as the average squared divergence of the length of the bars of the histogram from the value $1$ (uniform density): the smaller the MDD, the better the fitted model. The MDD of both models is reported in Fig.~\ref{fig:PIT_synthetic}. As expected, the TGH non-Gaussian model performs better than the Gaussian model for this synthetic data.
+%\begin{figure}[h]
+%\centering
+%\begin{subfigure}{.25\textwidth}
+%  \centering
+%  \includegraphics[width=\linewidth]{./figures/PIT_TGH.pdf}
+%   \caption{TGH non-Gaussian.}
+%\end{subfigure}%
+%\begin{subfigure}{.25\textwidth}
+%  \centering
+%  \includegraphics[width=\linewidth]{./figures/PIT_Gau.pdf}
+%  \caption{Gaussian.}
+%\end{subfigure}
+%  \caption{PIT histograms for predictive distribution with the same TGH synthetic dataset.}
+%  \label{fig:PIT_synthetic}
+%\end{figure}
 
 
 
@@ -798,10 +798,8 @@ estimates, we predict the values for $30K$ locations, separate
 from the training subsample. We produce the PIT histogram for 
 both the fitted model based on the testing data. The PIT histograms
 are given in Fig.~\ref{fig:PIT_real}. We can see from Fig.~\ref{fig:PIT_real} that the PIT histogram obtained from the Gaussian model does not correspond to a uniform distribution. The PIT
-from the TGH non-Gaussian model shows a uniform distribution where
-the Gaussian model MDD is $0.5434$ while TGH model MDD is $0.0290$. This observation leads us to the conclusion that the fitted TGH non-Gaussian model 
-is appropriate to explain the variability of the data, as seen in the precipitation dataset
-on the bottom-left location in Fig.~\ref{fig:data_image}. 
+from the TGH non-Gaussian model shows a uniform distribution. This observation leads us to the conclusion that the fitted TGH non-Gaussian model 
+is appropriate to explain the variability of the data. 
 
 %We also report the MSPE and MDD for both models in Table \ref{table:MSPE}. Although the MSPE are essentially identical (very slightly better for the Gaussian model), this does not mean that the Gaussian model is more appropriate thanthe TGH model for this case. Here MDD should be used for a single measure of model adequacy.
 \begin{table}
